@@ -35,7 +35,8 @@ def resize_image(image_path, target_size):
             return None
     
     # Resize the image
-    resized_image = cv2.resize(image, target_size)
+    resized_image = cv2.resize(image, target_size, interpolation=cv2.INTER_AREA)
+
     return resized_image
 
 def resize_images_in_directory(input_dir, output_dir, target_size):

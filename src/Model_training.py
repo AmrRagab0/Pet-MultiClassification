@@ -18,9 +18,9 @@ def train_model(train_generator, val_generator):
     base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 
     # Freeze the base model layers
-    base_model.trainable = True
-    for layer in base_model.layers[:-10]:  # Freeze all but last 10 layers
-        layer.trainable = False
+    base_model.trainable = False
+    #for layer in base_model.layers[:-10]:  # Freeze all but last 10 layers
+    #    layer.trainable = False
     # Add custom layers
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
@@ -31,8 +31,8 @@ def train_model(train_generator, val_generator):
     model = Model(inputs=base_model.input, outputs=predictions)
 
     # Compile the model
-    model.compile(optimizer=Adam(learning_rate=0.0001),
-                  loss='categorical_crossentropy',
+    model.compile(optimizer=Adam(learning_rate=0.00001),
+                  loss='sparse_categorical_crossentropy',
                   metrics=['accuracy'])
 
     # Define callbacks
@@ -47,13 +47,16 @@ def train_model(train_generator, val_generator):
                                    restore_best_weights=True,
                                    verbose=1)
 
+
+    #print("Number of classes in train_generator:", len(train_generator.class_indices))
+    #print("Class indices:", train_generator.class_indices)
     # Train the model
     history = model.fit(
         train_generator,
         steps_per_epoch=train_generator.samples // train_generator.batch_size,
         validation_data=val_generator,
         validation_steps=val_generator.samples // val_generator.batch_size,
-        epochs=20,
+        epochs=50,
         callbacks=[checkpoint, early_stopping]
     )
 

@@ -47,13 +47,13 @@ def preprocess_data(dataset_path, output_dir, target_size=(224, 224)):
         breed_map[breed_id] = breed_name  # Cat breeds have IDs 1-12
     for breed_id, breed_name in dog_breeds.items():
         breed_map[breed_id + 12] = breed_name  # Dog breeds have IDs 13-37
-
-
+        # Split dataset
     # Add breed names to the DataFrame
     df['breed_name'] = df.apply(lambda row: breed_map[row['breed_id']] if row['species'] == 1 else breed_map[row['breed_id'] + 12], axis=1)
-    
-    all_breeds = list(breed_map.values())
-    # Split dataset
+
+    #df['breed_name'] = df['breed_id'].map(breed_map)
+
+
     train_df, val_df, test_df = split_dataset(df)
 
     # Save split data
@@ -69,43 +69,50 @@ def preprocess_data(dataset_path, output_dir, target_size=(224, 224)):
     train_datagen = create_augmentation_generator()
     val_test_datagen = ImageDataGenerator(rescale=1.0/255.0)  # Only rescale for validation and test sets
     print("Number of unique breeds:", df['breed_name'].nunique())
+    print('printing breed_name value counts')
+    print(df['breed_name'].value_counts())  # To verify if breed names are assigned correctly
+    
+
+
     # Create data generators for training, validation, and test sets
     train_generator = train_datagen.flow_from_dataframe(
         dataframe=train_df,
         directory=resized_dir,
         x_col='filename',
-        y_col='breed_name',  # Use 'breed_name' for breed classification
+        y_col='class_id',  # Use 'breed_name' for breed classification
         target_size=target_size,
         batch_size=32,
-        class_mode='categorical',
-        classes=all_breeds 
+        class_mode='raw',
+        shuffle=True  # ✅ Ensures data is randomized
+
     )
 
     val_generator = val_test_datagen.flow_from_dataframe(
         dataframe=val_df,
         directory=resized_dir,
         x_col='filename',
-        y_col='breed_name',  # Use 'breed_name' for breed classification
+        y_col='class_id',  # Use 'breed_name' for breed classification
         target_size=target_size,
         batch_size=32,
-        class_mode='categorical',
-        classes=all_breeds
+        class_mode='raw',
     )
 
     test_generator = val_test_datagen.flow_from_dataframe(
         dataframe=test_df,
         directory=resized_dir,
         x_col='filename',
-        y_col='breed_name',  # Use 'breed_name' for breed classification
+        y_col='class_id',  # Use 'breed_name' for breed classification
         target_size=target_size,
         batch_size=32,
-        class_mode='categorical',
-        classes=all_breeds
+        class_mode='raw',
     )
 
+    '''
+    print(train_generator.class_indices)
+    print(val_generator.class_indices)
     # Print class indices
     print("Class indices:", train_generator.class_indices)
-
+    '''
     # Return the data generators
     return train_generator, val_generator, test_generator
 
