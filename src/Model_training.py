@@ -18,13 +18,14 @@ def train_model(train_generator, val_generator):
     base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 
     # Freeze the base model layers
-    base_model.trainable = False
-
+    base_model.trainable = True
+    for layer in base_model.layers[:-10]:  # Freeze all but last 10 layers
+        layer.trainable = False
     # Add custom layers
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
     x = Dense(1024, activation='relu')(x)
-    predictions = Dense(2, activation='softmax')(x)  # 2 classes: Cat and Dog
+    predictions = Dense(37, activation='softmax')(x) # 37 breeds 
 
     # Define the final model
     model = Model(inputs=base_model.input, outputs=predictions)
