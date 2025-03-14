@@ -47,8 +47,12 @@ def get_data_loaders(data_dir="../data/", batch_size=32, val_split=0.2):
 
     img_dir = os.path.join(data_dir, "images")
     annotation_file = os.path.join(data_dir, "annotations/trainval.txt") 
+    test_annotation_file = os.path.join(data_dir, "annotations/test.txt")  # Test split
+
 
     dataset = OxfordPetDataset(img_dir, annotation_file, transform)
+    test_dataset = OxfordPetDataset(img_dir, test_annotation_file, transform)
+
 
     train_size = int((1 - val_split) * len(dataset))
     val_size = len(dataset) - train_size
@@ -56,10 +60,12 @@ def get_data_loaders(data_dir="../data/", batch_size=32, val_split=0.2):
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset,batch_size=batch_size,shuffle=False)
 
-    return train_loader, val_loader
+
+    return train_loader, val_loader,test_loader
 
 
 if __name__ == "__main__":
-    train_loader, val_loader = get_data_loaders("../data/")
+    train_loader, val_loader,test_loader = get_data_loaders("../data/")
     print(f"Train size: {len(train_loader.dataset)}, Validation size: {len(val_loader.dataset)}")
