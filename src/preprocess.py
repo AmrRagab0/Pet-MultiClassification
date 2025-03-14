@@ -1,122 +1,62 @@
 import os
-import pandas as pd
-from resize_images import resize_images_in_directory
-from split_data import split_dataset
-from Data_augmentation import create_augmentation_generator
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import torch
+from torch.utils.data import Dataset, DataLoader, random_split
+from torchvision import transforms
+from PIL import Image
 
-def preprocess_data(dataset_path, output_dir, target_size=(224, 224)):
-    """
-    Preprocess the dataset: resize, normalize, split, and augment.
-    Args:
-        dataset_path (str): Path to the raw dataset.
-        output_dir (str): Directory to save preprocessed data.
-        target_size (tuple): Target size for resizing images.
-    Returns:
-        train_generator: Data generator for the training set.
-        val_generator: Data generator for the validation set.
-        test_generator: Data generator for the test set.
-    """
-    # Load metadata
-    metadata_path = os.path.join(dataset_path, 'annotations/list.txt')
-    df = pd.read_csv(metadata_path, sep=' ', header=None, names=['filename', 'class_id', 'species', 'breed_id'])
-
-    # Add .jpg extension to filenames
-    df['filename'] = df['filename'] + '.jpg'
-
-    # Define breed mapping for cats and dogs
-    cat_breeds = {
-        1: 'Abyssinian', 2: 'Bengal', 3: 'Birman', 4: 'Bombay', 5: 'British_Shorthair',
-        6: 'Egyptian_Mau', 7: 'Maine_Coon', 8: 'Persian', 9: 'Ragdoll', 10: 'Russian_Blue',
-        11: 'Siamese', 12: 'Sphynx'  # Cat breeds
-    }
-
-    dog_breeds = {
-        1: 'american_bulldog', 2: 'american_pit_bull_terrier', 3: 'basset_hound',
-        4: 'beagle', 5: 'boxer', 6: 'chihuahua', 7: 'english_cocker_spaniel',
-        8: 'english_setter', 9: 'german_shorthaired', 10: 'great_pyrenees',
-        11: 'havanese', 12: 'japanese_chin', 13: 'keeshond', 14: 'leonberger',
-        15: 'miniature_pinscher', 16: 'newfoundland', 17: 'pomeranian', 18: 'pug',
-        19: 'saint_bernard', 20: 'samoyed', 21: 'scottish_terrier', 22: 'shiba_inu',
-        23: 'staffordshire_bull_terrier', 24: 'wheaten_terrier', 25: 'yorkshire_terrier'  # Dog breeds
-    }
-
-    # Combine cat and dog breeds into a single breed_map
-    breed_map = {}
-    for breed_id, breed_name in cat_breeds.items():
-        breed_map[breed_id] = breed_name  # Cat breeds have IDs 1-12
-    for breed_id, breed_name in dog_breeds.items():
-        breed_map[breed_id + 12] = breed_name  # Dog breeds have IDs 13-37
-        # Split dataset
-    # Add breed names to the DataFrame
-    df['breed_name'] = df.apply(lambda row: breed_map[row['breed_id']] if row['species'] == 1 else breed_map[row['breed_id'] + 12], axis=1)
-
-    #df['breed_name'] = df['breed_id'].map(breed_map)
-
-
-    train_df, val_df, test_df = split_dataset(df)
-
-    # Save split data
-    train_df.to_csv(os.path.join(output_dir, 'train.csv'), index=False)
-    val_df.to_csv(os.path.join(output_dir, 'val.csv'), index=False)
-    test_df.to_csv(os.path.join(output_dir, 'test.csv'), index=False)
-
-    # Resize images
-    resized_dir = os.path.join(output_dir, 'resized')
-    resize_images_in_directory(os.path.join(dataset_path, 'images'), resized_dir, target_size)
-
-    # Create data generators
-    train_datagen = create_augmentation_generator()
-    val_test_datagen = ImageDataGenerator(rescale=1.0/255.0)  # Only rescale for validation and test sets
-    print("Number of unique breeds:", df['breed_name'].nunique())
-    print('printing breed_name value counts')
-    print(df['breed_name'].value_counts())  # To verify if breed names are assigned correctly
+class OxfordPetDataset(Dataset):
+    """Custom dataset for Oxford-IIIT Pet Dataset."""
     
+    def __init__(self, img_dir, annotation_file, transform=None):
+        self.img_dir = img_dir
+        self.transform = transform
+        self.image_labels = []
+
+        # Read annotation file (trainval.txt or test.txt)
+        with open(annotation_file, "r") as f:
+            for line in f.readlines():
+                parts = line.strip().split()
+                img_name = parts[0] + ".jpg"  # Image file name
+                label = int(parts[1]) - 1  # Convert to zero-based indexing
+                self.image_labels.append((img_name, label))
+
+    def __len__(self):
+        return len(self.image_labels)
+
+    def __getitem__(self, idx):
+        img_name, label = self.image_labels[idx]
+        img_path = os.path.join(self.img_dir, img_name)
+        image = Image.open(img_path).convert("RGB")  # Open image
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label
 
 
-    # Create data generators for training, validation, and test sets
-    train_generator = train_datagen.flow_from_dataframe(
-        dataframe=train_df,
-        directory=resized_dir,
-        x_col='filename',
-        y_col='class_id',  # Use 'breed_name' for breed classification
-        target_size=target_size,
-        batch_size=32,
-        class_mode='raw',
-        shuffle=True  # ✅ Ensures data is randomized
+def get_data_loaders(data_dir="../data/", batch_size=32, val_split=0.2):
+    """Loads the dataset using a custom dataset class."""
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    ])
 
-    )
+    img_dir = os.path.join(data_dir, "images")
+    annotation_file = os.path.join(data_dir, "annotations/trainval.txt") 
 
-    val_generator = val_test_datagen.flow_from_dataframe(
-        dataframe=val_df,
-        directory=resized_dir,
-        x_col='filename',
-        y_col='class_id',  # Use 'breed_name' for breed classification
-        target_size=target_size,
-        batch_size=32,
-        class_mode='raw',
-    )
+    dataset = OxfordPetDataset(img_dir, annotation_file, transform)
 
-    test_generator = val_test_datagen.flow_from_dataframe(
-        dataframe=test_df,
-        directory=resized_dir,
-        x_col='filename',
-        y_col='class_id',  # Use 'breed_name' for breed classification
-        target_size=target_size,
-        batch_size=32,
-        class_mode='raw',
-    )
+    train_size = int((1 - val_split) * len(dataset))
+    val_size = len(dataset) - train_size
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-    '''
-    print(train_generator.class_indices)
-    print(val_generator.class_indices)
-    # Print class indices
-    print("Class indices:", train_generator.class_indices)
-    '''
-    # Return the data generators
-    return train_generator, val_generator, test_generator
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-if __name__ == '__main__':
-    dataset_path = '../data/'
-    output_dir = '../data/preprocessed'
-    train_generator, val_generator, test_generator = preprocess_data(dataset_path, output_dir)
+    return train_loader, val_loader
+
+
+if __name__ == "__main__":
+    train_loader, val_loader = get_data_loaders("../data/")
+    print(f"Train size: {len(train_loader.dataset)}, Validation size: {len(val_loader.dataset)}")
