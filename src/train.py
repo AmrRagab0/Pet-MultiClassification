@@ -3,8 +3,13 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.models as models
 import matplotlib.pyplot as plt
+import os
+import datetime
+import glob
 from preprocess import get_data_loaders
 
+# Create directory for weights
+os.makedirs("../weights", exist_ok=True)
 # Load Data
 train_loader, val_loader, _ = get_data_loaders("../data/")
 
@@ -79,9 +84,23 @@ for epoch in range(num_epochs):
           f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
           f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.2f}%")
 
+# **Calculate Final Average Accuracy**
+avg_train_acc = sum(train_accuracies) / len(train_accuracies)
+avg_val_acc = sum(val_accuracies) / len(val_accuracies)
+
+# **Generate Filename with Accuracy & Timestamp**
+timestamp = datetime.datetime.now().strftime("%d-%H")  # Day-Hour
+model_filename = f"weights/resnet34_{avg_val_acc:.2f}acc_{timestamp}.pth"
+
 # Save Model
-torch.save(model.state_dict(), "resnet34_pets.pth")
-print("Training complete. Model saved as resnet34_pets.pth")
+torch.save(model.state_dict(), model_filename)
+print(f"Model saved as {model_filename}")
+
+# **Keep Only Last 5 Models**
+model_files = sorted(glob.glob("../weights/resnet34_*.pth"), key=os.path.getctime, reverse=True)
+for old_file in model_files[5:]:  # Keep latest 5
+    os.remove(old_file)
+    print(f"Deleted old model: {old_file}")
 
 # **Plot Accuracy & Loss**
 plt.figure(figsize=(12, 5))
