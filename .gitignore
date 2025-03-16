@@ -1,5 +1,5 @@
 data/
 weights/*.h5
-weights/*.pth
+#weights/*.pth
 src/*.h5
 CV JNR Task.pdf

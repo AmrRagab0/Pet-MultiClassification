@@ -47,10 +47,9 @@ pip install -r requirements.txt
 ## 📊 Training the Model
 Run the training script with:
 ```bash
-python src/train.py --epochs 10 
+python src/train.py 
 ```
-Options:
-- `--epochs`: Number of training epochs (default: 30)
+
 
 ## 🧪 Running Tests
 ### Model Weights
@@ -58,7 +57,7 @@ The real model weights are available on Google Drive(). Download the weights and
 
 Run unit tests with:
 ```bash
-cd tests/
+cd src/
 python test_pipeline.py
 ```
 
