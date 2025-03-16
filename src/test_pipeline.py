@@ -3,7 +3,7 @@ import torch
 import os
 import sys
 import torchvision.models as models
-sys.path.append(os.path.abspath("../src/"))
+
 from preprocess import get_data_loaders
 
 
