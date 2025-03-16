@@ -16,7 +16,7 @@ Pet-MultiClassification/
 │-- data/                     # Dataset storage
 │   ├── images/
 │   ├── annotations/
-│-- models/                   # Trained models and checkpoints
+│-- weights/                   # Trained models and checkpoints
 │-- src/
 │   ├── preprocess.py         # Dataset preprocessing
 │   ├── train.py              # Training pipeline
@@ -53,6 +53,9 @@ Options:
 - `--epochs`: Number of training epochs (default: 30)
 
 ## 🧪 Running Tests
+### Model Weights
+The real model weights are available on Google Drive(). Download the weights and place them in the weights/ folder for testing to work correctly.
+
 Run unit tests with:
 ```bash
 cd tests/
