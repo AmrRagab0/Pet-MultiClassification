@@ -1,14 +1,12 @@
-name: Run Tests on Commit
+name: Mock CI Pipeline
 
 on:
   push:
     branches:
-      - main
-      - dev
+      - mock-ci-test  # Target the new branch
   pull_request:
     branches:
-      - main
-      - dev
+      - mock-ci-test  # Trigger on PRs to this branch
 
 jobs:
   test:
@@ -21,15 +19,20 @@ jobs:
       - name: Set Up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.9"  # Kept the same as your original
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install torch torchvision  # Explicitly install required packages
+          # If you have a requirements.txt, uncomment the next line and adjust
           pip install -r requirements.txt
 
       - name: Run Unit Tests with Unittest
-        run: PYTHONPATH=src python -m unittest src.test_pipeline
+        env:
+          CI: "true"  # Enable mock mode for tests
+        run: |
+          python -m unittest discover -s . -p "test_*.py"  # Discover all test files
 
       #- name: Run Tests with Pytest
-       # run: pytest src/
+      #  run: pytest src/  # Uncomment if you switch to pytest later
