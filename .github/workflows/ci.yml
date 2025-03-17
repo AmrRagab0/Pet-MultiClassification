@@ -3,10 +3,10 @@ name: Mock CI Pipeline
 on:
   push:
     branches:
-      - mock-ci-test  # Target the new branch
+      - TestPipeline  # Target the new branch
   pull_request:
     branches:
-      - mock-ci-test  # Trigger on PRs to this branch
+      - TestPipeline  # Trigger on PRs to this branch
 
 jobs:
   test:
