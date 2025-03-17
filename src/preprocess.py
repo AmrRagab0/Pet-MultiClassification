@@ -1,6 +1,6 @@
 import os
 import torch
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import Dataset, DataLoader, random_split,TensorDataset
 from torchvision import transforms
 from PIL import Image
 
@@ -34,16 +34,27 @@ class OxfordPetDataset(Dataset):
         return image, label
 
 
-def get_data_loaders(data_dir="../data/", batch_size=32, val_split=0.2):
-    """Loads the dataset using a custom dataset class."""
-    transform = transforms.Compose([
-         transforms.RandomResizedCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2),
-        transforms.RandomRotation(10),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+def get_data_loaders(data_dir="../data/", batch_size=32, val_split=0.2,mock = False):
+    if mock:
+        # Synthetic data: 10 samples, 3 channels, 224x224 images, 37 classes
+        mock_images = torch.randn(10, 3, 224, 224)
+        mock_labels = torch.randint(0, 37, (10,))
+        dataset = TensorDataset(mock_images, mock_labels)
+        return (
+            DataLoader(dataset, batch_size=batch_size),
+            DataLoader(dataset, batch_size=batch_size),
+            DataLoader(dataset, batch_size=batch_size)
+        )
+    else :
+        """Loads the dataset using a custom dataset class."""
+        transform = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2),
+            transforms.RandomRotation(10),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
 
     img_dir = os.path.join(data_dir, "images")
     annotation_file = os.path.join(data_dir, "annotations/trainval.txt") 

@@ -11,8 +11,9 @@ class TestDataPreprocessing(unittest.TestCase):
     """Tests for dataset loading and preprocessing"""
 
     def setUp(self):
+        is_ci = os.getenv("CI", "false") == "true"  # enable mock mode to test on mock data 
         """Load data loaders for testing"""
-        self.train_loader, self.val_loader, self.test_loader = get_data_loaders("../data/", batch_size=8)
+        self.train_loader, self.val_loader, self.test_loader = get_data_loaders("../data/", batch_size=8,mock=is_ci)
     
     def test_data_loaders_not_empty(self):
         """Ensure dataset is not empty"""
@@ -31,9 +32,11 @@ class TestModelTraining(unittest.TestCase):
     """Tests for model training"""
 
     def setUp(self):
+        is_ci = os.getenv("CI", "false") == "true"
+        self.train_loader, _, _ = get_data_loaders("../data/", batch_size=8, mock=is_ci)
         """Load a ResNet model and training data"""
-        # Load the training loader from the dataset
-        self.train_loader, _, _ = get_data_loaders("../data/", batch_size=8)
+        
+    
         
         # Set up the model
         self.model = models.resnet34(pretrained=True)
@@ -71,12 +74,14 @@ class TestPredictionPipeline(unittest.TestCase):
     """Tests for inference and model loading"""
 
     def setUp(self):
+        is_ci = os.getenv("CI", "false") == "true" # enable mock mode 
         """Load trained model and test data"""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = models.resnet34(pretrained=False)
         num_ftrs = self.model.fc.in_features
         self.model.fc = torch.nn.Sequential(torch.nn.Dropout(0.3), torch.nn.Linear(num_ftrs, 37))
-        self.model.load_state_dict(torch.load("../weights/best_model.pth", map_location=self.device))
+        if not is_ci:  # if we are just testing , load random weights not the actual weights 
+            self.model.load_state_dict(torch.load("../weights/best_model.pth", map_location=self.device))
         self.model.to(self.device)
         self.model.eval()
         _, _, self.test_loader = get_data_loaders("../data/", batch_size=8)
