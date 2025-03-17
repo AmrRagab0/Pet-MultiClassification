@@ -20,8 +20,7 @@ Pet-MultiClassification/
 │-- src/
 │   ├── preprocess.py         # Dataset preprocessing
 │   ├── train.py              # Training pipeline
-│   ├── test.py               # Model testing
-│-- tests/                    # Unit tests for model & data pipeline
+│   ├── test.py               # Model testing                   
 │   ├── test_pipeline.py      # tests the whole pipeline 
 │-- requirements.txt          # Dependencies
 │-- README.md                 # Project documentation
