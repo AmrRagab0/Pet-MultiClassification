@@ -50,10 +50,18 @@ Run the training script with:
 python src/train.py 
 ```
 
+## 📊 Testing the Model
+Run the Testing script with:
+```bash
+python src/test.py 
+```
+### Model Weights
+Make sure that there is a weights file inside the /weights dir. 
+The real model weights are available on 
+Google Drive(https://drive.google.com/drive/folders/1_9rFFAwtSEA8-MlrFsREOUs1fLkE3R0a?usp=sharing). Download the weights and place them in the weights/ folder for testing to work correctly.
 
 ## 🧪 Running Tests
-### Model Weights
-The real model weights are available on Google Drive(). Download the weights and place them in the weights/ folder for testing to work correctly.
+
 
 Run unit tests with:
 ```bash
